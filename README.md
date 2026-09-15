@@ -5,5 +5,7 @@ A repo designed to be used after EmuDeck setup, bringing features like, download
 ## Supported emulators
 
 [-] PCSX2
+
 [-] DuckStation
+
 [ ] Others...

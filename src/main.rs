@@ -1,37 +1,66 @@
-use reqwest::Error;
-use scraper::{Html, Selector};
+mod listener;
 
-async fn fetch(url: &str) -> Result<String, Error> {
-    reqwest::get(url).await?.text().await
+use scraper::{Html, Selector, error::SelectorErrorKind};
+use url::{Url, ParseError};
+
+async fn fetch(url: &str) -> Result<String, AppError> {
+    let response = reqwest::get(url).await?;
+    let body = response.text().await?;
+    Ok(body)
 }
 
-#[tokio::main]
-async fn main() {
+#[derive(Debug)]
+enum AppError {
+    Http(reqwest::Error),
+    Parse(String)
+}
+
+impl From<reqwest::Error> for AppError {
+    fn from(e: reqwest::Error) -> Self {
+        AppError::Parse(e.to_string())
+    }
+}
+
+impl From<SelectorErrorKind<'_>> for AppError {
+    fn from(e: SelectorErrorKind) -> Self {
+        AppError::Parse(e.to_string())
+    }
+}
+
+impl From<ParseError> for AppError {
+    fn from(e: ParseError) -> Self {
+        AppError::Parse(e.to_string())
+    }
+}
+
+async fn download_texture(slur: &str) -> Result<(), AppError> {
     let url = "https://archive.org/download/pcsx2-hd-texture-packs";
-    let html = fetch(url).await.expect("failed to fetch texture page");
+    let html = fetch(url).await?;
 
     let document = Html::parse_document(&html);
-    let selector = Selector::parse("table.directory-listing-table").unwrap();
-    let row = Selector::parse("tbody tr").unwrap();
-    let cell = Selector::parse("td").unwrap();
-    let link = Selector::parse("a").unwrap();
+    let selector = Selector::parse("table.directory-listing-table")?;
+    let row = Selector::parse("tbody tr")?;
+    let link = Selector::parse("a")?;
 
     if let Some(table) = document.select(&selector).next() {
         for row in table.select(&row) {
-            let cells: Vec<String> = row
-                .select(&cell)
-                .map(|td| td.inner_html().trim().to_string())
-                .collect();
-
             if let Some(link) = row.select(&link).next() {
-                let name = link.text().collect::<Vec<_>>().join(" ");
-
-                println!("{:<60} {:<15} {} ",
-                    name,
-                    cells.get(1).unwrap_or(&"".to_string()),
-                    cells.get(2).unwrap_or(&"".to_string())
-                );
+                if let Some(href) = link.attr("href") {
+                    let mut full_url = String::from(url);
+                    full_url.push_str("/");
+                    full_url.push_str(href);
+                    
+                    let parsed_url = Url::parse(full_url.as_str())?;
+                    println!("URL: {}", parsed_url);
+                }
             }
         }
     }
+
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -> Result<(), AppError> {
+    Ok(())
 }
