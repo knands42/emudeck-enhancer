@@ -1,14 +1,20 @@
-mod listener;
+mod extractor;
 
 use scraper::{Html, Selector, error::SelectorErrorKind};
 use url::{Url, ParseError};
 
 
-
 #[derive(Debug)]
 enum AppError {
     Http(reqwest::Error),
-    Parse(String)
+    Parse(String),
+    Extractor(extractor::ExtractorError)
+}
+
+impl From<extractor::ExtractorError> for AppError {
+    fn from(e: extractor::ExtractorError) -> Self {
+        AppError::Extractor(e)
+    }
 }
 
 impl From<reqwest::Error> for AppError {
@@ -32,6 +38,6 @@ impl From<ParseError> for AppError {
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    listener::listen_to("");
+    let game_info = extractor::extract("");
     Ok(())
 }
