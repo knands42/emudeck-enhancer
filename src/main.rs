@@ -1,14 +1,15 @@
-mod extractor;
+use crate::textures::download_texture;
 
-use scraper::{Html, Selector, error::SelectorErrorKind};
-use url::{Url, ParseError};
+mod extractor;
+mod listener;
+mod textures;
 
 
 #[derive(Debug)]
 enum AppError {
-    Http(reqwest::Error),
-    Parse(String),
-    Extractor(extractor::ExtractorError)
+    Extractor(extractor::ExtractorError),
+    TextureDownloaderError(textures::TextureDownloaderError),
+    ListenerError(listener::ListenerError),
 }
 
 impl From<extractor::ExtractorError> for AppError {
@@ -17,27 +18,42 @@ impl From<extractor::ExtractorError> for AppError {
     }
 }
 
-impl From<reqwest::Error> for AppError {
-    fn from(e: reqwest::Error) -> Self {
-        AppError::Parse(e.to_string())
+impl From<textures::TextureDownloaderError> for AppError {
+    fn from(e: textures::TextureDownloaderError) -> Self {
+        AppError::TextureDownloaderError(e)
     }
 }
 
-impl From<SelectorErrorKind<'_>> for AppError {
-    fn from(e: SelectorErrorKind) -> Self {
-        AppError::Parse(e.to_string())
+impl From<listener::ListenerError> for AppError {
+    fn from(e: listener::ListenerError) -> Self {
+        AppError::ListenerError(e)
     }
 }
-
-impl From<ParseError> for AppError {
-    fn from(e: ParseError) -> Self {
-        AppError::Parse(e.to_string())
-    }
-}
-
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    let game_info = extractor::extract("");
+    let root_path = "";
+
+    let listener = listener::Listener::new(root_path, &[".iso"])?;
+    listener
+        .run(|path| {
+            let path = path.to_string_lossy().to_string();
+            match extractor::extract(&path) {
+                Ok(game_info) => {
+                    println!("path: {}", game_info.path.display());
+                    println!("name: {}", game_info.name);
+                    println!("serial: {:?}", game_info.serial);
+
+                    if let Some(serial) = game_info.serial {
+                        tokio::spawn(async move {
+                            let _ = download_texture(&serial).await;
+                        });
+                    }
+                }
+                Err(e) => eprintln!("extract error for {}: {:?}", path, e),
+            }
+        })
+        .await?;
+
     Ok(())
 }

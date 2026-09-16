@@ -1,10 +1,16 @@
-async fn fetch(url: &str) -> Result<String, AppError> {
+use scraper::{Html, Selector};
+use url::Url;
+
+use crate::textures::TextureDownloaderError;
+
+async fn fetch(url: &str) -> Result<String, TextureDownloaderError> {
     let response = reqwest::get(url).await?;
     let body = response.text().await?;
     Ok(body)
 }
 
-async fn download_texture(slur: &str) -> Result<(), AppError> {
+pub async fn download_texture(slur: &str) -> Result<(), TextureDownloaderError> {
+    println!("Receiving slur: {}", slur);
     let url = "https://archive.org/download/pcsx2-hd-texture-packs";
     let html = fetch(url).await?;
 
