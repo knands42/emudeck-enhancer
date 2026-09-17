@@ -9,7 +9,7 @@ pub struct GameInfo {
     pub serial: Option<String>,
 }
 
-impl<'a> GameInfo {
+impl GameInfo {
     pub fn new(path: PathBuf, name: String, serial: Option<String>) -> Self {
         Self { path, name, serial }
     }

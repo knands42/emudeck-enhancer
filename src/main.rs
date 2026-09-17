@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::config::Config;
-use crate::textures::download_texture;
+use crate::textures::TextureManager;
 
 mod config;
 mod extractor;
@@ -39,12 +39,12 @@ async fn main() -> Result<(), AppError> {
     let config = Config::new();
     let root_path = config.root_path_to_listen;
     let texture_destination = config.texture_destination_path;
+    let texture_manager = TextureManager::new(PathBuf::from(texture_destination));
 
     let listener = listener::Listener::new(root_path, &["iso"])?;
     listener
         .run(|path| {
             let path = path.to_string_lossy().to_string();
-            let texture_dest = texture_destination.clone();
             
             match extractor::extract(&path) {
                 Ok(game_info) => {
@@ -54,7 +54,7 @@ async fn main() -> Result<(), AppError> {
 
                     if let Some(serial) = game_info.serial {
                         tokio::spawn(async move {
-                            let _ = download_texture(&serial, PathBuf::from(texture_dest)).await;
+                            let _ = texture_manager.get_texture(&serial).await;
                         });
                     }
                 }

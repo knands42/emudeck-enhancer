@@ -3,15 +3,15 @@ use std::path::PathBuf;
 use scraper::{Html, Selector};
 use url::Url;
 
-use crate::textures::TextureDownloaderError;
+use crate::textures::TextureError;
 
-async fn fetch(url: &str) -> Result<String, TextureDownloaderError> {
+async fn fetch(url: &str) -> Result<String, TextureError> {
     let response = reqwest::get(url).await?;
     let body = response.text().await?;
     Ok(body)
 }
 
-pub async fn download_texture(slur: &str, destination: PathBuf) -> Result<(), TextureDownloaderError> {
+pub async fn download_texture(slur: &str, destination: &PathBuf) -> Result<(), TextureError> {
     println!("Receiving slur: {}", slur);
     let url = "https://archive.org/download/pcsx2-hd-texture-packs";
     let html = fetch(url).await?;
@@ -32,9 +32,7 @@ pub async fn download_texture(slur: &str, destination: PathBuf) -> Result<(), Te
 
                     let parsed_url = Url::parse(full_url.as_str())?;
                     println!("URL: {}", parsed_url);
-
-                    // 2. create the a folder under the destination if not yet created with the slur name
-                    // 3. then download the texture into the destination
+                    // 2. then download the texture into the destination
                 }
             }
         }
