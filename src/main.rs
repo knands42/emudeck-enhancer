@@ -11,7 +11,7 @@ mod textures;
 #[derive(Debug)]
 enum AppError {
     Extractor(extractor::ExtractorError),
-    TextureDownloaderError(textures::TextureDownloaderError),
+    TextureError(textures::TextureError),
     ListenerError(listener::ListenerError),
 }
 
@@ -21,9 +21,9 @@ impl From<extractor::ExtractorError> for AppError {
     }
 }
 
-impl From<textures::TextureDownloaderError> for AppError {
-    fn from(e: textures::TextureDownloaderError) -> Self {
-        AppError::TextureDownloaderError(e)
+impl From<textures::TextureError> for AppError {
+    fn from(e: textures::TextureError) -> Self {
+        AppError::TextureError(e)
     }
 }
 
@@ -38,13 +38,13 @@ async fn main() -> Result<(), AppError> {
     let config = Config::new();
     let root_path = config.root_path_to_listen;
     let texture_destination = config.texture_destination_path;
-    let texture_manager = TextureManager::new(PathBuf::from(texture_destination));
 
     let listener = listener::Listener::new(root_path, &["iso"])?;
     listener
         .run(|path| {
             let path = path.to_string_lossy().to_string();
 
+            let texture_manager = TextureManager::new(PathBuf::from(texture_destination.clone()));
             match extractor::extract(&path) {
                 Ok(game_info) => {
                     println!("path: {}", game_info.path.display());
