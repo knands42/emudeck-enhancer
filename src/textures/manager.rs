@@ -1,29 +1,34 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use crate::textures::{TextureError, downloader::download_texture};
 
-use crate::textures::downloader::download_texture;
+pub const TEMP_DIR_PREFIX: &str = "retro-station";
 
 pub struct TextureManager {
     texture_path: PathBuf,
-    temp_dir: PathBuf
 }
 
 impl TextureManager {
     pub fn new(texture_path: PathBuf) -> Self {
-        let new_tmp_dir = PathBuf::from("");
-        create_dir(&new_tmp_dir);
-        
-        Self { texture_path, temp_dir: new_tmp_dir }
+        Self { texture_path }
     }
 
-    pub async fn get_texture(&self, slur: &str) {
-        download_texture(slur, &self.temp_dir).await;
-        self.extract_compact_file(slur, &self.texture_path);
+    pub async fn get_texture(&self, slur: &str) -> Result<(), TextureError> {
+        let temp_dir = tempfile::Builder::new()
+            .prefix(TEMP_DIR_PREFIX)
+            .tempdir()?;
+
+        download_texture(slur, temp_dir.path()).await?;
+        create_dir(slur, &self.texture_path);
+        extract_compact_file(slur, &self.texture_path);
+
+        Ok(())
     }
 }
 
-impl TextureManager {
-    fn extract_compact_file(&self, slur: &str, destination_path: &PathBuf) {}
+fn extract_compact_file(slur: &str, destination_path: &Path) {
+    
 }
 
-fn create_dir(destination_path: &PathBuf) {}
+fn create_dir(slur: &str, destination_path: &Path) {
+}

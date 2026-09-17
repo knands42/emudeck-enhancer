@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use scraper::{Html, Selector};
 use tokio::io::AsyncWriteExt;
@@ -22,7 +22,7 @@ async fn download_file(url: Url, destination: &Path) -> Result<(), TextureError>
     Ok(())
 }
 
-pub async fn download_texture(slur: &str, destination: &PathBuf) -> Result<(), TextureError> {
+pub async fn download_texture(slur: &str, destination: &Path) -> Result<(), TextureError> {
     println!("Receiving slur: {}", slur);
     let url = "https://archive.org/download/pcsx2-hd-texture-packs";
     let html = fetch(url).await?;
