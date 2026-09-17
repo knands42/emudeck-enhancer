@@ -1,6 +1,6 @@
 mod downloader;
-mod manager;
 mod extractor;
+mod manager;
 
 use scraper::error::SelectorErrorKind;
 use url::ParseError;
@@ -10,7 +10,7 @@ pub use manager::TextureManager;
 #[derive(Debug)]
 pub enum TextureError {
     Parse(String),
-    Error(String)
+    Error(String),
 }
 
 impl From<reqwest::Error> for TextureError {

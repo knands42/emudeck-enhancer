@@ -4,7 +4,7 @@ pub use listen::Listener;
 #[derive(Debug)]
 pub enum ListenerError {
     Io(std::io::Error),
-    Notify(notify::Error)
+    Notify(notify::Error),
 }
 
 impl From<notify::Error> for ListenerError {

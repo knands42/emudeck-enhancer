@@ -8,7 +8,6 @@ mod extractor;
 mod listener;
 mod textures;
 
-
 #[derive(Debug)]
 enum AppError {
     Extractor(extractor::ExtractorError),
@@ -45,7 +44,7 @@ async fn main() -> Result<(), AppError> {
     listener
         .run(|path| {
             let path = path.to_string_lossy().to_string();
-            
+
             match extractor::extract(&path) {
                 Ok(game_info) => {
                     println!("path: {}", game_info.path.display());

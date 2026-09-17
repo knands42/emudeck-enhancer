@@ -36,10 +36,13 @@ pub async fn download_texture(slur: &str, destination: &Path) -> Result<(), Text
         for row in table.select(&row) {
             if let Some(link) = row.select(&link).next() {
                 let name: String = link.text().collect();
-                if !name.to_ascii_uppercase().contains(&slur.to_ascii_uppercase()) {
+                if !name
+                    .to_ascii_uppercase()
+                    .contains(&slur.to_ascii_uppercase())
+                {
                     continue;
                 }
-                
+
                 if let Some(href) = link.attr("href") {
                     let mut full_url = String::from(url);
                     full_url.push_str("/");

@@ -14,21 +14,22 @@ impl TextureManager {
     }
 
     pub async fn get_texture(&self, slur: &str) -> Result<(), TextureError> {
-        let temp_dir = tempfile::Builder::new()
-            .prefix(TEMP_DIR_PREFIX)
-            .tempdir()?;
+        let temp_dir = tempfile::Builder::new().prefix(TEMP_DIR_PREFIX).tempdir()?;
+
+        println!("tmp_dir: {}", format!("{:?}", temp_dir.path().clone()));
 
         download_texture(slur, temp_dir.path()).await?;
-        create_dir(slur, &self.texture_path);
-        extract_compact_file(slur, &self.texture_path);
+        let destination_path = create_dir(slur, &self.texture_path).await?;
+        extract_compact_file(temp_dir.path(), &destination_path);
 
         Ok(())
     }
 }
 
-fn extract_compact_file(slur: &str, destination_path: &Path) {
-    
-}
+fn extract_compact_file(from_dir: &Path, to_dir: &Path) {}
 
-fn create_dir(slur: &str, destination_path: &Path) {
+async fn create_dir(slur: &str, destination_path: &Path) -> Result<PathBuf, TextureError> {
+    let game_dir = destination_path.join(slur);
+    tokio::fs::create_dir_all(&game_dir).await?;
+    Ok(game_dir)
 }

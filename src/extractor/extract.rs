@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::extractor::{GameInfo, ExtractorError};
+use crate::extractor::{ExtractorError, GameInfo};
 
 const PVD_SECTOR_SIZE: u64 = 2048;
 const PVD_SECTOR: u64 = 16;
@@ -13,7 +13,11 @@ const ROOT_DIRECTORY_SIZE: usize = 34;
 
 pub fn extract(path: &str) -> Result<GameInfo, ExtractorError> {
     let serial = extract_serial_number_from(String::from(path))?;
-    Ok(GameInfo::new(PathBuf::from(path), String::new(), Some(serial)))
+    Ok(GameInfo::new(
+        PathBuf::from(path),
+        String::new(),
+        Some(serial),
+    ))
 }
 
 struct Extent {
