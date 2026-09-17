@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::config::Config;
 use crate::textures::download_texture;
 
@@ -35,12 +37,15 @@ impl From<listener::ListenerError> for AppError {
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
     let config = Config::new();
-    let root_path = config.root_path;
+    let root_path = config.root_path_to_listen;
+    let texture_destination = config.texture_destination_path;
 
     let listener = listener::Listener::new(root_path, &["iso"])?;
     listener
         .run(|path| {
             let path = path.to_string_lossy().to_string();
+            let texture_dest = texture_destination.clone();
+            
             match extractor::extract(&path) {
                 Ok(game_info) => {
                     println!("path: {}", game_info.path.display());
@@ -49,7 +54,7 @@ async fn main() -> Result<(), AppError> {
 
                     if let Some(serial) = game_info.serial {
                         tokio::spawn(async move {
-                            let _ = download_texture(&serial).await;
+                            let _ = download_texture(&serial, PathBuf::from(texture_dest)).await;
                         });
                     }
                 }

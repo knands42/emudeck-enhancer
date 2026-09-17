@@ -1,7 +1,8 @@
 use std::env;
 
 pub struct Config {
-    pub root_path: String,
+    pub root_path_to_listen: String,
+    pub texture_destination_path: String
 }
 
 impl Config {
@@ -9,7 +10,8 @@ impl Config {
         dotenvy::dotenv().ok();
 
         Config {
-            root_path: env::var("ROOT_PATH").unwrap_or_else(|_| ".".to_string()),
+            root_path_to_listen: env::var("ROOT_PATH").unwrap_or_else(|_| ".".to_string()),
+            texture_destination_path: env::var("TEXTURE_DESTINATION_PATH").unwrap_or_else(|_| ".".to_string())
         }
     }
 }

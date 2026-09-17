@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use scraper::{Html, Selector};
 use url::Url;
 
@@ -9,7 +11,7 @@ async fn fetch(url: &str) -> Result<String, TextureDownloaderError> {
     Ok(body)
 }
 
-pub async fn download_texture(slur: &str) -> Result<(), TextureDownloaderError> {
+pub async fn download_texture(slur: &str, destination: PathBuf) -> Result<(), TextureDownloaderError> {
     println!("Receiving slur: {}", slur);
     let url = "https://archive.org/download/pcsx2-hd-texture-packs";
     let html = fetch(url).await?;
@@ -22,6 +24,7 @@ pub async fn download_texture(slur: &str) -> Result<(), TextureDownloaderError> 
     if let Some(table) = document.select(&selector).next() {
         for row in table.select(&row) {
             if let Some(link) = row.select(&link).next() {
+                // 1. check if the link contains the slur in the text only then check the href
                 if let Some(href) = link.attr("href") {
                     let mut full_url = String::from(url);
                     full_url.push_str("/");
@@ -29,6 +32,9 @@ pub async fn download_texture(slur: &str) -> Result<(), TextureDownloaderError> 
 
                     let parsed_url = Url::parse(full_url.as_str())?;
                     println!("URL: {}", parsed_url);
+
+                    // 2. create the a folder under the destination if not yet created with the slur name
+                    // 3. then download the texture into the destination
                 }
             }
         }
