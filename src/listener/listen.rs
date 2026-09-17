@@ -1,12 +1,12 @@
 use futures::channel::mpsc::{Receiver, channel};
-use notify::{Config, Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, event::{ModifyKind, RenameMode}};
 use std::path::{Path, PathBuf};
 
 use crate::listener::ListenerError;
 
 pub struct Listener {
     watcher: RecommendedWatcher,
-    rx: Receiver<Result<Event, Error>>,
+    rx: Receiver<PathBuf>,
 }
 
 fn is_rom(path: &Path, extensions: &[String]) -> bool {
@@ -16,29 +16,42 @@ fn is_rom(path: &Path, extensions: &[String]) -> bool {
 }
 
 impl Listener {
-    pub fn new<P: AsRef<Path>>(path: P, extensions: &[&str]) -> Result<Self, ListenerError> {
+    pub fn new<P: AsRef<Path>>(root_path: P, extensions: &[&str]) -> Result<Self, ListenerError> {
         let (mut tx, rx) = channel(1);
-
         let extensions: Vec<String> = extensions.iter().map(|s| s.to_string()).collect();
+
         let mut watcher = RecommendedWatcher::new(
             move |res: notify::Result<Event>| {
                 let Ok(ev) = &res else { return };
-                if matches!(ev.kind, EventKind::Create(_) | EventKind::Modify(_))
-                    && ev.paths.iter().any(|p| is_rom(p, &extensions))
+
+                let is_eligible = matches!(ev.kind, EventKind::Create(_) |  EventKind::Modify(
+                                           ModifyKind::Data(_) | ModifyKind::Metadata(_) | ModifyKind::Other
+                                       ) | EventKind::Modify(ModifyKind::Name(RenameMode::To | RenameMode::Both))
+                );
+
+                if is_eligible
                 {
-                    let _ = tx.try_send(res);
+                    let is_rename = matches!(ev.kind, EventKind::Modify(ModifyKind::Name(_)));
+                    let filtered_path = if is_rename {
+                        ev.paths.last()
+                    } else {
+                        ev.paths.first()
+                    };
+                    if let Some(path) = filtered_path.filter(|p| is_rom(p, &extensions)) {
+                        let _ = tx.try_send(path.clone());                        
+                    }
                 }
             },
             Config::default(),
         )?;
-        watcher.watch(path.as_ref(), RecursiveMode::Recursive);
+        let _ = watcher.watch(root_path.as_ref(), RecursiveMode::Recursive);
 
         Ok(Self { watcher, rx })
     }
 
     pub async fn run(mut self, mut on_rom: impl FnMut(PathBuf)) -> Result<(), ListenerError> {
-        while let Ok(Ok(ev)) = self.rx.recv().await {
-            on_rom(ev.paths.first().cloned().unwrap_or_default());
+        while let Ok(path) = self.rx.recv().await {
+            on_rom(path);
         }
 
         Ok(())

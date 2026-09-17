@@ -1,5 +1,7 @@
+use crate::config::Config;
 use crate::textures::download_texture;
 
+mod config;
 mod extractor;
 mod listener;
 mod textures;
@@ -32,9 +34,10 @@ impl From<listener::ListenerError> for AppError {
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    let root_path = "";
+    let config = Config::new();
+    let root_path = config.root_path;
 
-    let listener = listener::Listener::new(root_path, &[".iso"])?;
+    let listener = listener::Listener::new(root_path, &["iso"])?;
     listener
         .run(|path| {
             let path = path.to_string_lossy().to_string();
