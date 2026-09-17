@@ -1,5 +1,6 @@
 mod downloader;
 mod manager;
+mod extractor;
 
 use scraper::error::SelectorErrorKind;
 use url::ParseError;
@@ -9,6 +10,7 @@ pub use manager::TextureManager;
 #[derive(Debug)]
 pub enum TextureError {
     Parse(String),
+    Error(String)
 }
 
 impl From<reqwest::Error> for TextureError {
@@ -26,5 +28,11 @@ impl From<SelectorErrorKind<'_>> for TextureError {
 impl From<ParseError> for TextureError {
     fn from(e: ParseError) -> Self {
         TextureError::Parse(e.to_string())
+    }
+}
+
+impl From<std::io::Error> for TextureError {
+    fn from(e: std::io::Error) -> Self {
+        TextureError::Error(e.to_string())
     }
 }
