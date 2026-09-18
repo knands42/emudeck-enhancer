@@ -35,10 +35,14 @@ fn get_downloadable_url(url: &str, slur: &str, html: &str) -> Result<Option<Url>
     let mut matched_url = None;
     for table in document.select(&table_sel) {
         for row in table.select(&row_sel) {
-            let Some(link) = row.select(&link_sel).next() else { continue; };
+            let Some(link) = row.select(&link_sel).next() else {
+                continue;
+            };
 
             let name: String = link.text().collect();
-            if !name.to_ascii_uppercase().contains(&slur_upper) { continue; }
+            if !name.to_ascii_uppercase().contains(&slur_upper) {
+                continue;
+            }
 
             if let Some(href) = link.attr("href") {
                 matched_url = Some(Url::parse(&format!("{url}/{href}"))?);
