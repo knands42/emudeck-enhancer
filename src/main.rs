@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::config::Config;
-use crate::textures::TextureManager;
+use crate::usecase::TextureSyncFacade;
 
 mod config;
 mod iso_extractor;
@@ -41,25 +41,16 @@ async fn main() -> Result<(), AppError> {
     let texture_destination = config.texture_destination_path;
 
     let listener = listener::Listener::new(root_path, &["iso"])?;
+    let sync = TextureSyncFacade::new(PathBuf::from(texture_destination));
     listener
         .run(|path| {
-            let path = path.to_string_lossy().to_string();
-
-            let texture_manager = TextureManager::new(PathBuf::from(texture_destination.clone()));
-            match iso_extractor::extract(&path) {
-                Ok(game_info) => {
-                    println!("path: {}", game_info.path.display());
-                    println!("name: {}", game_info.name);
-                    println!("serial: {:?}", game_info.serial);
-
-                    if let Some(serial) = game_info.serial {
-                        tokio::spawn(async move {
-                            let _ = texture_manager.get_texture(&serial).await;
-                        });
-                    }
+            let sync = sync.clone();
+            let p = path.to_owned();
+            tokio::spawn(async move {
+                if let Err(e) = sync.process_iso(&p).await {
+                    eprintln!("sync error: {e:?}");
                 }
-                Err(e) => eprintln!("extract error for {}: {:?}", path, e),
-            }
+            });
         })
         .await?;
 
