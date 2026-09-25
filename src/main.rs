@@ -4,19 +4,20 @@ use crate::config::Config;
 use crate::textures::TextureManager;
 
 mod config;
-mod extractor;
+mod iso_extractor;
 mod listener;
 mod textures;
+mod usecase;
 
 #[derive(Debug)]
 enum AppError {
-    Extractor(extractor::ExtractorError),
+    Extractor(iso_extractor::ExtractorError),
     TextureError(textures::TextureError),
     ListenerError(listener::ListenerError),
 }
 
-impl From<extractor::ExtractorError> for AppError {
-    fn from(e: extractor::ExtractorError) -> Self {
+impl From<iso_extractor::ExtractorError> for AppError {
+    fn from(e: iso_extractor::ExtractorError) -> Self {
         AppError::Extractor(e)
     }
 }
@@ -45,7 +46,7 @@ async fn main() -> Result<(), AppError> {
             let path = path.to_string_lossy().to_string();
 
             let texture_manager = TextureManager::new(PathBuf::from(texture_destination.clone()));
-            match extractor::extract(&path) {
+            match iso_extractor::extract(&path) {
                 Ok(game_info) => {
                     println!("path: {}", game_info.path.display());
                     println!("name: {}", game_info.name);

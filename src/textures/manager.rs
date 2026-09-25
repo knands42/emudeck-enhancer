@@ -1,6 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use crate::textures::{TextureError, downloader::download_texture};
+use crate::textures::{
+    TextureError, downloader::download_texture, extractor::extract_compact_file,
+};
 
 pub const TEMP_DIR_PREFIX: &str = "retro-station";
 
@@ -25,8 +27,6 @@ impl TextureManager {
         Ok(())
     }
 }
-
-fn extract_compact_file(from_dir: &Path, to_dir: &Path) {}
 
 async fn create_dir(slur: &str, destination_path: &Path) -> Result<PathBuf, TextureError> {
     let game_dir = destination_path.join(slur);

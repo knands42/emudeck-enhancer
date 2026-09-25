@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::extractor::{ExtractorError, GameInfo};
+use crate::iso_extractor::{ExtractorError, GameInfo};
 
 const PVD_SECTOR_SIZE: u64 = 2048;
 const PVD_SECTOR: u64 = 16;
